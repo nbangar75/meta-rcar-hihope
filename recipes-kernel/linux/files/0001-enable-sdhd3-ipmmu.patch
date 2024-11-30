@@ -1,0 +1,25 @@
+From 9d1dd3fc5f058956e0ac7f67ff6d4bfd19974af0 Mon Sep 17 00:00:00 2001
+From: Takuya Sakata <takuya.sakata.bm@hitachi.com>
+Date: Mon, 4 Sep 2023 04:49:14 +0000
+Subject: [PATCH] enable sdhd3 ipmmu
+
+---
+ arch/arm64/boot/dts/renesas/hihope-common.dtsi | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/renesas/hihope-common.dtsi b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+index 97b5e77a2d43..f964d27f179f 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-common.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+@@ -385,6 +385,8 @@ &sdhi3 {
+ 	pinctrl-1 = <&sdhi3_pins>;
+ 	pinctrl-names = "default", "state_uhs";
+ 
++	iommus = <&ipmmu_ds1 35>;
++
+ 	vmmc-supply = <&reg_3p3v>;
+ 	vqmmc-supply = <&reg_1p8v>;
+ 	bus-width = <8>;
+-- 
+2.25.1
+

@@ -1,0 +1,33 @@
+From fbe826cddba2668b543dcc78c3ed720f5ecaa4ed Mon Sep 17 00:00:00 2001
+From: Takuya Sakata <takuya.sakata.bm@hitachi.com>
+Date: Tue, 19 Sep 2023 01:23:29 +0000
+Subject: [PATCH] add mfis node
+
+---
+ arch/arm64/boot/dts/renesas/hihope-common.dtsi | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/renesas/hihope-common.dtsi b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+index 59e632f57671..32d977d2f334 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-common.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+@@ -537,3 +537,16 @@ spidev {
+ 		reg = <0>;
+ 	};
+ };
++
++&soc {
++	mfis: mfis@e6260000 {
++		compatible = "renesas,mfis";
++		reg = <0x0 0xe6260000 0x0 0x200>;
++		interrupts = <0x00 0xe0 0x04 0x00 0xe1 0x04 0x00 0xe2 0x04 0x00 0xe3 0x04 0x00 0xe4 0x04 0x00 0xe5 0x04 0x00 0xe6 0x04 0x00 0xe7 0x04>;
++		interrupt-names = "eicr0", "eicr1", "eicr2", "eicr3", "eicr4", "eicr5", "eicr6", "eicr7";
++		renesas,mfis-channels = <0 1 2 3>;
++		status = "okay";
++
++		/delete-node/ mfis-as;
++	};
++};
+-- 
+2.25.1
+

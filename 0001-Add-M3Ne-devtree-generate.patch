@@ -1,0 +1,241 @@
+From c9eff8e6377166ae001b6e6bd68d9fca5cc3aa86 Mon Sep 17 00:00:00 2001
+From: Yuu Ichikawa <yuu.ichikawa.kx@renesas.com>
+Date: Thu, 6 Jun 2024 10:02:11 +0900
+Subject: [PATCH] Add M3Ne devtree generate
+
+---
+ conf/layer.conf                               |   6 +
+ ...-r8a77965-hihope-device-tree-support.patch | 191 ++++++++++++++++++
+ recipes-kernel/linux/linux-renesas_%.bbappend |   1 +
+ 3 files changed, 198 insertions(+)
+ create mode 100644 recipes-kernel/linux/files/0001-Add-r8a77965-hihope-device-tree-support.patch
+
+diff --git a/conf/layer.conf b/conf/layer.conf
+index c6a54e8..d82da28 100644
+--- a/conf/layer.conf
++++ b/conf/layer.conf
+@@ -21,6 +21,12 @@ KERNEL_DEVICETREE_r8a7796_append = " \
+     renesas/r8a77961-hihope-rzg2m-ex-mipi-2.4.dtb \
+ "
+ 
++KERNEL_DEVICETREE_r8a77965_append = " \
++    renesas/r8a77965-hihope-rzg2n.dtb \
++    renesas/r8a77965-hihope-rzg2n-ex.dtb \
++    renesas/r8a77965-hihope-rzg2n-ex-mipi-2.1.dtb \
++"
++
+ DISTRO_FEATURES_append = " hihope_test_audio"
+ DISTRO_FEATURES_append = " hihope_test_wifibt"
+ DISTRO_FEATURES_append = " hihope_test_camera"
+diff --git a/recipes-kernel/linux/files/0001-Add-r8a77965-hihope-device-tree-support.patch b/recipes-kernel/linux/files/0001-Add-r8a77965-hihope-device-tree-support.patch
+new file mode 100644
+index 0000000..65954a4
+--- /dev/null
++++ b/recipes-kernel/linux/files/0001-Add-r8a77965-hihope-device-tree-support.patch
+@@ -0,0 +1,191 @@
++From 6d9ab520df64a7d3e2ef88181df3fcc8eced3601 Mon Sep 17 00:00:00 2001
++From: Yuu Ichikawa <yuu.ichikawa.kx@renesas.com>
++Date: Wed, 5 Jun 2024 14:59:21 +0900
++Subject: [PATCH] Add r8a77965-hihope device tree support
++
++---
++ .../r8a77965-hihope-rzg2n-ex-mipi-2.1.dts     |  23 ++++
++ .../dts/renesas/r8a77965-hihope-rzg2n-ex.dts  |  28 +++++
++ .../dts/renesas/r8a77965-hihope-rzg2n.dts     | 105 ++++++++++++++++++
++ 3 files changed, 156 insertions(+)
++ create mode 100644 arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex-mipi-2.1.dts
++ create mode 100644 arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex.dts
++ create mode 100644 arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n.dts
++
++diff --git a/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex-mipi-2.1.dts b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex-mipi-2.1.dts
++new file mode 100644
++index 000000000000..a7af55f8ac78
++--- /dev/null
+++++ b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex-mipi-2.1.dts
++@@ -0,0 +1,23 @@
+++// SPDX-License-Identifier: GPL-2.0
+++/*
+++ * Device Tree Source for the HiHope RZ/G2N board
+++ * connected with aistarvision-mipi-v2-adapter board
+++ *
+++ * Copyright (C) 2020 Renesas Electronics Corp.
+++ */
+++
+++/dts-v1/;
+++#include "r8a77965-hihope-rzg2n-ex.dts"
+++#include "hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi"
+++
+++/ {
+++	model = "HopeRun HiHope RZ/G2N with sub board connected with aistarvision-mipi-v2-adapter board";
+++	compatible = "hoperun,hihope-rzg2n", "renesas,r8a774b1";
+++};
+++
+++/*
+++ * Remove csi40 node if want to use 2 cameras
+++ */
+++&csi40 {
+++	status = "disabled";
+++};
++diff --git a/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex.dts b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex.dts
++new file mode 100644
++index 000000000000..6ef8768be71e
++--- /dev/null
+++++ b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n-ex.dts
++@@ -0,0 +1,28 @@
+++// SPDX-License-Identifier: GPL-2.0
+++/*
+++ * Device Tree Source for the HiHope RZ/G2N Rev.3.0/4.0 connected to
+++ * sub board
+++ *
+++ * Copyright (C) 2020 Renesas Electronics Corp.
+++ */
+++ 
+++#include <dt-bindings/gpio/gpio.h>
+++
+++#include "r8a77965-hihope-rzg2n.dts"
+++#include "hihope-rzg2-ex.dtsi"
+++
+++/ {
+++	model = "HopeRun HiHope RZ/G2N with sub board";
+++	compatible = "hoperun,hihope-rzg2-ex", "hoperun,hihope-rzg2n",
+++		     "renesas,r8a774b1";
+++};
+++
+++/* Set SW43 = ON and SW1001[7] = OFF for SATA port to be activated */
+++&sata {
+++	status = "okay";
+++};
+++
+++/* Set SW43 = OFF and SW1001[7] = ON for PCIE1 port to be activated */
+++&pciec1 {
+++	status = "okay";
+++};
++diff --git a/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n.dts b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n.dts
++new file mode 100644
++index 000000000000..09a447f8d1a3
++--- /dev/null
+++++ b/arch/arm64/boot/dts/renesas/r8a77965-hihope-rzg2n.dts
++@@ -0,0 +1,105 @@
+++// SPDX-License-Identifier: GPL-2.0
+++/*
+++ * Device Tree Source for the HiHope RZ/G2N main board Rev.3.0/4.0
+++ *
+++ * Copyright (C) 2020 Renesas Electronics Corp.
+++ */
+++
+++/dts-v1/;
+++#include "r8a77965.dtsi"
+++#include "hihope-rev4.dtsi"
+++
+++/ {
+++	model = "HopeRun HiHope RZ/G2N main board based on r8a774b1";
+++	compatible = "hoperun,hihope-rzg2n", "renesas,r8a774b1";
+++
+++	memory@48000000 {
+++		device_type = "memory";
+++		/* first 128MB is reserved for secure area. */
+++		reg = <0x0 0x48000000 0x0 0x78000000>;
+++	};
+++
+++	memory@480000000 {
+++		device_type = "memory";
+++		reg = <0x4 0x80000000 0x0 0x80000000>;
+++	};
+++
+++	reserved-memory {
+++		#address-cells = <2>;
+++		#size-cells = <2>;
+++		ranges;
+++
+++		/* device specific region for Lossy Decompression */
+++		lossy_decompress: linux,lossy_decompress@54000000 {
+++			no-map;
+++			reg = <0x00000000 0x54000000 0x0 0x03000000>;
+++		};
+++
+++		/* global autoconfigured region for contiguous allocations */
+++		global_cma: linux,cma@58000000 {
+++			compatible = "shared-dma-pool";
+++			reusable;
+++			reg = <0x00000000 0x58000000 0x0 0x20000000>;
+++			linux,cma-default;
+++		};
+++
+++		/* device specific region for contiguous allocations */
+++		mmp_reserved: linux,multimedia@70000000 {
+++			compatible = "shared-dma-pool";
+++			reusable;
+++			reg = <0x00000000 0x78000000 0x0 0x10000000>;
+++		};
+++	};
+++
+++	mmngr {
+++		compatible = "renesas,mmngr";
+++		memory-region = <&mmp_reserved>, <&lossy_decompress>;
+++	};
+++
+++	mmngrbuf {
+++		compatible = "renesas,mmngrbuf";
+++	};
+++};
+++
+++&du {
+++	clocks = <&cpg CPG_MOD 724>,
+++		 <&cpg CPG_MOD 723>,
+++		 <&cpg CPG_MOD 721>,
+++		 <&versaclock5 1>,
+++		 <&x302_clk>,
+++		 <&versaclock5 2>;
+++	clock-names = "du.0", "du.1", "du.3",
+++		      "dclkin.0", "dclkin.1", "dclkin.3";
+++};
+++
+++&sdhi3 {
+++	mmc-hs400-1_8v;
+++};
+++
+++&vspb {
+++	status = "okay";
+++};
+++
+++&vspi0 {
+++	status = "okay";
+++};
+++
+++&xhci0 {
+++	memory-region = <&global_cma>;
+++};
+++
+++&ehci0 {
+++	memory-region = <&global_cma>;
+++};
+++
+++&ohci0 {
+++	memory-region = <&global_cma>;
+++};
+++
+++&ehci1 {
+++	memory-region = <&global_cma>;
+++};
+++
+++&ohci1 {
+++	memory-region = <&global_cma>;
+++};
++-- 
++2.25.1
++
+diff --git a/recipes-kernel/linux/linux-renesas_%.bbappend b/recipes-kernel/linux/linux-renesas_%.bbappend
+index 552f02a..0d3a308 100644
+--- a/recipes-kernel/linux/linux-renesas_%.bbappend
++++ b/recipes-kernel/linux/linux-renesas_%.bbappend
+@@ -5,6 +5,7 @@ SRCREV = "452163c75612e4161099c0bf5178fd0cf60e2cad"
+ 
+ SRC_URI_append = " \
+     file://0001-Merge-hihope-dtsi-from-RZ-Yocto.patch \
++    file://0001-Add-r8a77965-hihope-device-tree-support.patch \
+     file://0001-enable-sdhd3-ipmmu.patch \
+     file://gpio.cfg \
+     file://cryptocell.cfg \
+-- 
+2.25.1
+

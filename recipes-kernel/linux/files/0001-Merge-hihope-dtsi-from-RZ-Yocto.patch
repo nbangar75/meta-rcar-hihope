@@ -1,0 +1,898 @@
+From c535958d870282f3de426c9f757468b47e32ddd6 Mon Sep 17 00:00:00 2001
+From: Yuu Ichikawa <yuu.ichikawa.kx@renesas.com>
+Date: Fri, 9 Jun 2023 02:14:39 +0000
+Subject: [PATCH] Merge-hihope-dtsi-from-RZ-Yocto
+
+---
+ .../aistarvision-mipi-adapter-2.1.dtsi        |   4 +-
+ .../aistarvision-mipi-adapter-2.4.dtsi        |  78 ++++++++++
+ .../arm64/boot/dts/renesas/hihope-common.dtsi | 141 +++++++++++++++++-
+ arch/arm64/boot/dts/renesas/hihope-rev4.dtsi  |  24 ---
+ ...rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi | 109 ++++++++++++++
+ ...rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi | 111 ++++++++++++++
+ .../boot/dts/renesas/hihope-rzg2-ex-lvds.dtsi |   2 +-
+ .../boot/dts/renesas/hihope-rzg2-ex.dtsi      |  19 ++-
+ .../r8a77961-hihope-rzg2m-ex-idk-1110wr.dts   |  15 ++
+ .../r8a77961-hihope-rzg2m-ex-mipi-2.1.dts     |  23 +++
+ .../r8a77961-hihope-rzg2m-ex-mipi-2.4.dts     |  23 +++
+ .../dts/renesas/r8a77961-hihope-rzg2m-ex.dts  |  22 +++
+ .../dts/renesas/r8a77961-hihope-rzg2m.dts     | 101 +++++++++++++
+ 13 files changed, 636 insertions(+), 36 deletions(-)
+ create mode 100644 arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.4.dtsi
+ create mode 100644 arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi
+ create mode 100644 arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi
+ create mode 100644 arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-idk-1110wr.dts
+ create mode 100644 arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.1.dts
+ create mode 100644 arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.4.dts
+ create mode 100644 arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex.dts
+ create mode 100644 arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m.dts
+
+diff --git a/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.1.dtsi b/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.1.dtsi
+index dac6ff49020f..7ce986f0a06f 100644
+--- a/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.1.dtsi
++++ b/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.1.dtsi
+@@ -61,7 +61,7 @@ osc25250_clk: osc25250_clk {
+ 	};
+ };
+ 
+-&MIPI_PARENT_I2C {
++&MIPI_OV5645_PARENT_I2C {
+ 	ov5645: ov5645@3c {
+ 		compatible = "ovti,ov5645";
+ 		reg = <0x3c>;
+@@ -77,7 +77,9 @@ ov5645_ep: endpoint {
+ 			};
+ 		};
+ 	};
++};
+ 
++&MIPI_IMX219_PARENT_I2C {
+ 	imx219: imx219@10 {
+ 		compatible = "sony,imx219";
+ 		reg = <0x10>;
+diff --git a/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.4.dtsi b/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.4.dtsi
+new file mode 100644
+index 000000000000..414c24ce11cd
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/aistarvision-mipi-adapter-2.4.dtsi
+@@ -0,0 +1,78 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the AISTARVISION MIPI Adapter V2.4
++ *
++ * Copyright (C) 2021 Renesas Electronics Corp.
++ */
++
++/ {
++	ov5645_vdddo_1v8: 1p8v {
++		compatible = "regulator-fixed";
++		regulator-name = "camera_vdddo";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		regulator-always-on;
++	};
++
++	ov5645_vdda_2v8: 2p8v {
++		compatible = "regulator-fixed";
++		regulator-name = "camera_vdda";
++		regulator-min-microvolt = <2800000>;
++		regulator-max-microvolt = <2800000>;
++		regulator-always-on;
++	};
++
++	ov5645_vddd_1v5: 1p5v {
++		compatible = "regulator-fixed";
++		regulator-name = "camera_vddd";
++		regulator-min-microvolt = <1500000>;
++		regulator-max-microvolt = <1500000>;
++		regulator-always-on;
++	};
++
++	osc25250_clk: osc25250_clk {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <24000000>;
++	};
++};
++
++#ifdef MIPI_OV5645_PARENT_I2C_CSI20
++&MIPI_OV5645_PARENT_I2C_CSI20 {
++	ov5645_csi20: ov5645@3c {
++		compatible = "ovti,ov5645";
++		reg = <0x3c>;
++		clock-names = "xclk";
++		clocks = <&osc25250_clk>;
++		clock-frequency = <24000000>;
++		vdddo-supply = <&ov5645_vdddo_1v8>;
++		vdda-supply = <&ov5645_vdda_2v8>;
++		vddd-supply = <&ov5645_vddd_1v5>;
++
++		port {
++			ov5645_csi20_ep: endpoint {
++			};
++		};
++	};
++};
++#endif
++
++#ifdef MIPI_OV5645_PARENT_I2C_CSI40
++&MIPI_OV5645_PARENT_I2C_CSI40 {
++	ov5645_csi40: ov5645@3c {
++		compatible = "ovti,ov5645";
++		reg = <0x3c>;
++		clock-names = "xclk";
++		clocks = <&osc25250_clk>;
++		clock-frequency = <24000000>;
++		vdddo-supply = <&ov5645_vdddo_1v8>;
++		vdda-supply = <&ov5645_vdda_2v8>;
++		vddd-supply = <&ov5645_vddd_1v5>;
++
++		port {
++			ov5645_csi40_ep: endpoint {
++			};
++		};
++	};
++};
++#endif
+diff --git a/arch/arm64/boot/dts/renesas/hihope-common.dtsi b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+index 0c7e6f790590..9d18d136772f 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-common.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-common.dtsi
+@@ -12,6 +12,8 @@ / {
+ 	aliases {
+ 		serial0 = &scif2;
+ 		serial1 = &hscif0;
++		serial2 = &hscif1;
++		serial3 = &scif0;
+ 		mmc0 = &sdhi3;
+ 		mmc1 = &sdhi0;
+ 		mmc2 = &sdhi2;
+@@ -76,7 +78,8 @@ sound_card: sound {
+ 
+ 		label = "rcar-sound";
+ 
+-		dais = <&rsnd_port>;
++		dais = <&rsnd_port0	/* HDMI Audio */
++			&rsnd_port1>;	/* External PCM5102A Codec */
+ 	};
+ 
+ 	vbus0_usb2: regulator-vbus0-usb2 {
+@@ -113,6 +116,21 @@ x304_clk: x304-clock {
+ 		#clock-cells = <0>;
+ 		clock-frequency = <25000000>;
+ 	};
++
++	vspm_if {
++		compatible = "renesas,vspm_if";
++	};
++
++	pcm5102a: pcm5102a {
++		compatible = "ti,pcm5102a";
++		#sound-dai-cells = <0>;
++
++		port {
++			pcm5102a_endpoint: endpoint {
++				remote-endpoint = <&rsnd_endpoint1>;
++			};
++		};
++	};
+ };
+ 
+ &audio_clk_a {
+@@ -140,7 +158,7 @@ &extalr_clk {
+ };
+ 
+ &gpio6 {
+-	usb1-reset {
++	usb1-reset-hog {
+ 		gpio-hog;
+ 		gpios = <10 GPIO_ACTIVE_LOW>;
+ 		output-low;
+@@ -175,6 +193,21 @@ &hscif0 {
+ 	status = "okay";
+ };
+ 
++&hscif1 {
++	pinctrl-0 = <&hscif1_pins>;
++	pinctrl-names = "default";
++
++	uart-has-rtscts;
++	status = "okay";
++};
++
++&scif0 {
++	pinctrl-0 = <&scif0_pins>;
++	pinctrl-names = "default";
++
++	status = "okay";
++};
++
+ &hsusb {
+ 	dr_mode = "otg";
+ 	status = "okay";
+@@ -224,6 +257,16 @@ scif_clk_pins: scif_clk {
+ 		function = "scif_clk";
+ 	};
+ 
++	hscif1_pins: hscif1 {
++		groups = "hscif1_data_a", "hscif1_ctrl_a";
++		function = "hscif1";
++	};
++
++	scif0_pins: scif0 {
++		groups = "scif0_data";
++		function = "scif0";
++	};
++
+ 	sdhi0_pins: sd0 {
+ 		groups = "sdhi0_data4", "sdhi0_ctrl";
+ 		function = "sdhi0";
+@@ -263,12 +306,26 @@ ovc {
+ 			pins = "GP_6_27";
+ 			bias-pull-up;
+ 		};
++
++		pwen {
++			pins = "GP_6_26";
++		};
+ 	};
+ 
+ 	usb30_pins: usb30 {
+ 		groups = "usb30";
+ 		function = "usb30";
+ 	};
++
++	sound_clk_pins: sound_clk {
++		groups = "audio_clk_a_a";
++		function = "audio_clk";
++	};
++
++	sound_pins: sound {
++		groups = "ssi01239_ctrl", "ssi0_data", "ssi1_data_a";
++		function = "ssi";
++	};
+ };
+ 
+ &rwdt {
+@@ -331,8 +388,7 @@ &sdhi3 {
+ 	vqmmc-supply = <&reg_1p8v>;
+ 	bus-width = <8>;
+ 	mmc-hs200-1_8v;
+-	no-sd;
+-	no-sdio;
++	mmc-hs400-1_8v;
+ 	non-removable;
+ 	fixed-emmc-driver-type = <1>;
+ 	status = "okay";
+@@ -380,3 +436,80 @@ &xhci0 {
+ 
+ 	status = "okay";
+ };
++
++&cmt0 {
++	status = "okay";
++};
++
++&cmt1 {
++	status = "okay";
++};
++
++&cmt2 {
++	status = "okay";
++};
++
++&cmt3 {
++	status = "okay";
++};
++
++&tmu0 {
++	status = "okay";
++};
++
++&tmu1 {
++	status = "okay";
++};
++
++&tmu2 {
++	status = "okay";
++};
++
++&tmu3 {
++	status = "okay";
++};
++
++&tmu4 {
++	status = "okay";
++};
++
++&rcar_sound {
++	pinctrl-0 = <&sound_clk_pins &sound_pins>;
++	pinctrl-names = "default";
++
++	status = "okay";
++
++	/* Single DAI */
++	#sound-dai-cells = <0>;
++
++	ports {
++		rsnd_port0: port@0 {
++			rsnd_endpoint: endpoint {
++				remote-endpoint = <&dw_hdmi0_snd_in>;
++
++
++				dai-format = "i2s";
++				bitclock-master = <&rsnd_endpoint>;
++				frame-master = <&rsnd_endpoint>;
++
++				playback = <&ssi2>;
++			};
++		};
++
++		rsnd_port1: port@1 {
++			rsnd_endpoint1: endpoint {
++				remote-endpoint = <&pcm5102a_endpoint>;
++
++				dai-format = "i2s";
++				bitclock-master = <&rsnd_endpoint1>;
++				frame-master = <&rsnd_endpoint1>;
++
++				playback = <&ssi1 &src1 &dvc0>;
++			};
++		};
++	};
++};
++
++&ssi1 {
++	shared-pin;
++};
+diff --git a/arch/arm64/boot/dts/renesas/hihope-rev4.dtsi b/arch/arm64/boot/dts/renesas/hihope-rev4.dtsi
+index ed2e44d02e25..393e57cec3b2 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-rev4.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-rev4.dtsi
+@@ -72,21 +72,9 @@ sound_clk_pins: sound_clk {
+ 		groups = "audio_clk_a_a", "audio_clk_b_a", "audio_clkout_a";
+ 		function = "audio_clk";
+ 	};
+-
+-	sound_pins: sound {
+-		groups = "ssi01239_ctrl", "ssi0_data", "ssi1_data_a";
+-		function = "ssi";
+-	};
+ };
+ 
+ &rcar_sound {
+-	pinctrl-0 = <&sound_pins>, <&sound_clk_pins>;
+-	pinctrl-names = "default";
+-	status = "okay";
+-
+-	/* Single DAI */
+-	#sound-dai-cells = <0>;
+-
+ 	/* audio_clkout0/1/2/3 */
+ 	#clock-cells = <1>;
+ 	clock-frequency = <12288000 11289600>;
+@@ -109,16 +97,4 @@ &rcar_sound {
+ 		 <&audio_clk_a>, <&cs2000>,
+ 		 <&audio_clk_c>,
+ 		 <&cpg CPG_CORE CPG_AUDIO_CLK_I>;
+-
+-	rsnd_port: port {
+-		rsnd_endpoint: endpoint {
+-			remote-endpoint = <&dw_hdmi0_snd_in>;
+-
+-			dai-format = "i2s";
+-			bitclock-master = <&rsnd_endpoint>;
+-			frame-master = <&rsnd_endpoint>;
+-
+-			playback = <&ssi2>;
+-		};
+-	};
+ };
+diff --git a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi
+new file mode 100644
+index 000000000000..c62ddb9b2ba5
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi
+@@ -0,0 +1,109 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2[HMN] MIPI common parts
++ *
++ * Copyright (C) 2020 Renesas Electronics Corp.
++ */
++
++#define MIPI_OV5645_PARENT_I2C i2c2
++#define MIPI_IMX219_PARENT_I2C i2c3
++#include "aistarvision-mipi-adapter-2.1.dtsi"
++
++&csi20 {
++	status = "okay";
++
++	ports {
++		port@0 {
++			reg = <0>;
++			csi20_in: endpoint {
++				clock-lanes = <0>;
++				data-lanes = <1 2>;
++				remote-endpoint = <&ov5645_ep>;
++			};
++		};
++	};
++};
++
++&csi40 {
++	status = "okay";
++
++	ports {
++		port@0 {
++			reg = <0>;
++			csi40_in: endpoint {
++				clock-lanes = <0>;
++				data-lanes = <1 2>;
++				remote-endpoint = <&imx219_ep>;
++			};
++		};
++	};
++};
++
++&i2c3 {
++	pinctrl-0 = <&i2c3_pins>;
++	pinctrl-names = "default";
++	status = "okay";
++};
++
++&imx219 {
++	port {
++		imx219_ep: endpoint {
++			clock-lanes = <0>;
++			data-lanes = <1 2>;
++			link-frequencies = /bits/ 64 <456000000>;
++			remote-endpoint = <&csi40_in>;
++		};
++	};
++};
++
++&ov5645 {
++	enable-gpios = <&gpio6 4 GPIO_ACTIVE_HIGH>;
++	reset-gpios = <&gpio6 8 GPIO_ACTIVE_LOW>;
++
++	port {
++		ov5645_ep: endpoint {
++			clock-lanes = <0>;
++			data-lanes = <1 2>;
++			remote-endpoint = <&csi20_in>;
++		};
++	};
++};
++
++&pfc {
++	i2c3_pins: i2c3 {
++		groups = "i2c3";
++		function = "i2c3";
++	};
++};
++
++&vin0 {
++	status = "okay";
++};
++
++&vin1 {
++	status = "okay";
++};
++
++&vin2 {
++	status = "okay";
++};
++
++&vin3 {
++	status = "okay";
++};
++
++&vin4 {
++	status = "okay";
++};
++
++&vin5 {
++	status = "okay";
++};
++
++&vin6 {
++	status = "okay";
++};
++
++&vin7 {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi
+new file mode 100644
+index 000000000000..15df6720b858
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi
+@@ -0,0 +1,111 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2[HMN] MIPI common parts
++ *
++ * Copyright (C) 2021 Renesas Electronics Corp.
++ */
++
++#define MIPI_OV5645_PARENT_I2C_CSI20 i2c2
++#define MIPI_OV5645_PARENT_I2C_CSI40 i2c3
++#include "aistarvision-mipi-adapter-2.4.dtsi"
++
++&csi20 {
++	status = "okay";
++
++	ports {
++		port@0 {
++			reg = <0>;
++			csi20_in: endpoint {
++				clock-lanes = <0>;
++				data-lanes = <1 2>;
++				remote-endpoint = <&ov5645_csi20_ep>;
++			};
++		};
++	};
++};
++
++&csi40 {
++	status = "okay";
++
++	ports {
++		port@0 {
++			reg = <0>;
++			csi40_in: endpoint {
++				clock-lanes = <0>;
++				data-lanes = <1 2>;
++				remote-endpoint = <&ov5645_csi40_ep>;
++			};
++		};
++	};
++};
++
++&i2c3 {
++	pinctrl-0 = <&i2c3_pins>;
++	pinctrl-names = "default";
++	status = "okay";
++};
++
++&ov5645_csi20 {
++	enable-gpios = <&gpio6 4 GPIO_ACTIVE_HIGH>;
++	reset-gpios = <&gpio6 8 GPIO_ACTIVE_LOW>;
++
++	port {
++		ov5645_csi20_ep: endpoint {
++			clock-lanes = <0>;
++			data-lanes = <1 2>;
++			remote-endpoint = <&csi20_in>;
++		};
++	};
++};
++
++&ov5645_csi40 {
++	enable-gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
++	reset-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
++
++	port {
++		ov5645_csi40_ep: endpoint {
++			clock-lanes = <0>;
++			data-lanes = <1 2>;
++			remote-endpoint = <&csi40_in>;
++		};
++	};
++};
++
++&pfc {
++	i2c3_pins: i2c3 {
++		groups = "i2c3";
++		function = "i2c3";
++	};
++};
++
++&vin0 {
++	status = "okay";
++};
++
++&vin1 {
++	status = "okay";
++};
++
++&vin2 {
++	status = "okay";
++};
++
++&vin3 {
++	status = "okay";
++};
++
++&vin4 {
++	status = "okay";
++};
++
++&vin5 {
++	status = "okay";
++};
++
++&vin6 {
++	status = "okay";
++};
++
++&vin7 {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-lvds.dtsi b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-lvds.dtsi
+index 40c5e8d6d841..d66d17e34694 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-lvds.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex-lvds.dtsi
+@@ -20,7 +20,7 @@ &gpio1 {
+ 	 * When GP1_20 is LOW LVDS0 is connected to the LVDS connector
+ 	 * When GP1_20 is HIGH LVDS0 is connected to the LT8918L
+ 	 */
+-	lvds-connector-en-gpio {
++	lvds-connector-en-hog {
+ 		gpio-hog;
+ 		gpios = <20 GPIO_ACTIVE_HIGH>;
+ 		output-low;
+diff --git a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex.dtsi b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex.dtsi
+index b9e46aed5336..c3f5a29b63ed 100644
+--- a/arch/arm64/boot/dts/renesas/hihope-rzg2-ex.dtsi
++++ b/arch/arm64/boot/dts/renesas/hihope-rzg2-ex.dtsi
+@@ -19,7 +19,8 @@ &avb {
+ 	pinctrl-0 = <&avb_pins>;
+ 	pinctrl-names = "default";
+ 	phy-handle = <&phy0>;
+-	phy-mode = "rgmii-txid";
++	tx-internal-delay-ps = <2000>;
++	rx-internal-delay-ps = <1800>;
+ 	status = "okay";
+ 
+ 	phy0: ethernet-phy@0 {
+@@ -30,10 +31,14 @@ phy0: ethernet-phy@0 {
+ 	};
+ };
+ 
+-&can0 {
+-	pinctrl-0 = <&can0_pins>;
++&canfd {
++	pinctrl-0 = <&canfd_pins>;
+ 	pinctrl-names = "default";
+ 	status = "okay";
++
++	channel0 {
++		status = "okay";
++	};
+ };
+ 
+ &can1 {
+@@ -68,9 +73,11 @@ pins_mii_tx {
+ 		};
+ 	};
+ 
+-	can0_pins: can0 {
+-		groups = "can0_data_a";
+-		function = "can0";
++	canfd_pins: canfd {
++		channel0 {
++			groups = "canfd0_data_a";
++			function = "canfd0";
++		};
+ 	};
+ 
+ 	can1_pins: can1 {
+diff --git a/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-idk-1110wr.dts b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-idk-1110wr.dts
+new file mode 100644
+index 000000000000..63ccfa119ac7
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-idk-1110wr.dts
+@@ -0,0 +1,15 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2M v3.0 Rev.4 sub board connected
++ * to an Advantech IDK-1110WR 10.1" LVDS panel
++ *
++ * Copyright (C) 2020 Renesas Electronics Corp.
++ */
++
++#include "r8a77961-hihope-rzg2m-ex.dts"
++#include "hihope-rzg2-ex-lvds.dtsi"
++#include "rzg2-advantech-idk-1110wr-panel.dtsi"
++
++&lvds0 {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.1.dts b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.1.dts
+new file mode 100644
+index 000000000000..950e2ce46b51
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.1.dts
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2M v3.0 board
++ * connected with aistarvision-mipi-v2-adapter board
++ *
++ * Copyright (C) 2021 Renesas Electronics Corp.
++ */
++
++/dts-v1/;
++#include "r8a77961-hihope-rzg2m-ex.dts"
++#include "hihope-rzg2-ex-aistarvision-mipi-adapter-2.1.dtsi"
++
++/ {
++	model = "HopeRun HiHope RZ/G2M v3.0 with sub board connected with aistarvision-mipi-v2-adapter board";
++	compatible = "hoperun,hihope-rzg2m", "renesas,r8a774a3";
++};
++
++/*
++ * Remove csi40 node if want to use 2 cameras
++ */
++&csi40 {
++	status = "disabled";
++};
+diff --git a/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.4.dts b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.4.dts
+new file mode 100644
+index 000000000000..ccda792e7c78
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex-mipi-2.4.dts
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2M v3.0 board
++ * connected with aistarvision-mipi-v2-adapter board
++ *
++ * Copyright (C) 2021 Renesas Electronics Corp.
++ */
++
++/dts-v1/;
++#include "r8a77961-hihope-rzg2m-ex.dts"
++#include "hihope-rzg2-ex-aistarvision-mipi-adapter-2.4.dtsi"
++
++/ {
++	model = "HopeRun HiHope RZ/G2M v3.0 with sub board connected with aistarvision-mipi-v2-adapter board";
++	compatible = "hoperun,hihope-rzg2m", "renesas,r8a774a3";
++};
++
++/*
++ * Remove csi40 node if want to use 2 cameras
++ */
++&csi40 {
++	status = "disabled";
++};
+diff --git a/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex.dts b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex.dts
+new file mode 100644
+index 000000000000..a0b348ef1d73
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m-ex.dts
+@@ -0,0 +1,22 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2M v3.0 sub board
++ *
++ * Copyright (C) 2020 Renesas Electronics Corp.
++ */
++
++#include <dt-bindings/gpio/gpio.h>
++
++#include "r8a77961-hihope-rzg2m.dts"
++#include "hihope-rzg2-ex.dtsi"
++
++/ {
++	model = "HopeRun HiHope RZ/G2M v3.0 with sub board";
++	compatible = "hoperun,hihope-rzg2-ex", "hoperun,hihope-rzg2m",
++		     "renesas,r8a774a3";
++};
++
++/* SW43 should be OFF, if in ON state SATA port will be activated */
++&pciec1 {
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m.dts b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m.dts
+new file mode 100644
+index 000000000000..ae553782e22b
+--- /dev/null
++++ b/arch/arm64/boot/dts/renesas/r8a77961-hihope-rzg2m.dts
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Device Tree Source for the HiHope RZ/G2M v3.0 main board
++ *
++ * Copyright (C) 2020 Renesas Electronics Corp.
++ */
++
++/dts-v1/;
++#include "r8a77961.dtsi"
++#include "hihope-rev4.dtsi"
++
++/ {
++	model = "HopeRun HiHope RZ/G2M v3.0 main board based on r8a774a3";
++	compatible = "hoperun,hihope-rzg2m", "renesas,r8a774a3";
++
++	memory@48000000 {
++		device_type = "memory";
++		/* first 128MB is reserved for secure area. */
++		reg = <0x0 0x48000000 0x0 0x78000000>;
++	};
++
++	memory@600000000 {
++		device_type = "memory";
++		reg = <0x6 0x00000000 0x0 0x80000000>;
++	};
++
++	reserved-memory {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		/* device specific region for Lossy Decompression */
++		lossy_decompress: linux,lossy_decompress@54000000 {
++			no-map;
++			reg = <0x00000000 0x54000000 0x0 0x03000000>;
++		};
++
++		/* global autoconfigured region for contiguous allocations */
++		global_cma: linux,cma@58000000 {
++			compatible = "shared-dma-pool";
++			reusable;
++			reg = <0x00000000 0x58000000 0x0 0x20000000>;
++			linux,cma-default;
++		};
++
++		/* device specific region for contiguous allocations */
++		mmp_reserved: linux,multimedia@70000000 {
++			compatible = "shared-dma-pool";
++			reusable;
++			reg = <0x00000000 0x78000000 0x0 0x10000000>;
++		};
++	};
++
++	mmngr {
++		compatible = "renesas,mmngr";
++		memory-region = <&mmp_reserved>, <&lossy_decompress>;
++	};
++
++	mmngrbuf {
++		compatible = "renesas,mmngrbuf";
++	};
++};
++
++&du {
++	clocks = <&cpg CPG_MOD 724>,
++		 <&cpg CPG_MOD 723>,
++		 <&cpg CPG_MOD 722>,
++		 <&versaclock5 1>,
++		 <&x302_clk>,
++		 <&versaclock5 2>;
++	clock-names = "du.0", "du.1", "du.2",
++		      "dclkin.0", "dclkin.1", "dclkin.2";
++};
++
++&vspb {
++	status = "okay";
++};
++
++&vspi0 {
++	status = "okay";
++};
++
++&xhci0 {
++	memory-region = <&global_cma>;
++};
++
++&ehci0 {
++	memory-region = <&global_cma>;
++};
++
++&ohci0 {
++	memory-region = <&global_cma>;
++};
++
++&ehci1 {
++	memory-region = <&global_cma>;
++};
++
++&ohci1 {
++	memory-region = <&global_cma>;
++};
+-- 
+2.25.1
+
